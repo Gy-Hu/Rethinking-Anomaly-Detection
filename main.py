@@ -59,18 +59,20 @@ if __name__ == '__main__':
     parser.add_argument("--epoch", type=int, default=100, help="The max number of epochs")
     parser.add_argument("--run", type=int, default=1, help="Running times")
     parser.add_argument("--knn-reconstruct-graph", action='store_true',help="Reconstruct graph using KNN algorithm")
-    parser.add_argument("--knn-reconstruct-graph-approximate", action='store_true', help="Reconstruct graph using approximate KNN algorithm (Fast verision)")
+    parser.add_argument("--knn-reconstruct-graph-approximate", action='store_true', 
+                        help="Reconstruct graph using approximate KNN algorithm (Fast verision)")
     parser.add_argument("--alpha",type=float, default=1.0, help="alpha of thershold in KNN algorithm")
+    parser.add_argument("--top-k",type=int, default=3, help="top-k in KNN algorithm")
 
     args = parser.parse_args()
     print(args)
     dataset_name = args.dataset
     h_feats = args.hid_dim
-    graph = Dataset(name=dataset_name,knn_reconstruct=args.knn_reconstruct_graph).graph\
+    graph = Dataset(name=dataset_name,knn_reconstruct=args.knn_reconstruct_graph,alpha=args.alpha,k=args.top_k).graph\
         if args.knn_reconstruct_graph \
-            else Dataset(name=dataset_name,knn_reconstruct_approximate=args.knn_reconstruct_graph_approximate).graph \
+            else Dataset(name=dataset_name,knn_reconstruct_approximate=args.knn_reconstruct_graph_approximate,alpha=args.alpha,k=args.top_k).graph \
             if args.knn_reconstruct_graph_approximate \
-                else Dataset(name=dataset_name).graph
+                else Dataset(name=dataset_name,k=args.top_k).graph
     in_feats = graph.ndata['feature'].shape[1]
     num_classes = 2
 
