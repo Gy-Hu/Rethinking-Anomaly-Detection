@@ -57,12 +57,14 @@ if __name__ == '__main__':
     parser.add_argument("--hid_dim", type=int, default=64, help="Hidden layer dimension")
     parser.add_argument("--num_layers", type=int, default=2, help="Number of GNN layers")
     parser.add_argument("--epoch", type=int, default=100, help="The max number of epochs")
-    parser.add_argument("--run", type=int, default=1, help="Running times")
+    parser.add_argument("--run", type=int, default=1, help="Running mode")
     parser.add_argument("--knn-reconstruct-graph", action='store_true',help="Reconstruct graph using KNN algorithm")
     parser.add_argument("--knn-reconstruct-graph-approximate", action='store_true', 
                         help="Reconstruct graph using approximate KNN algorithm (Fast verision)")
     parser.add_argument("--alpha",type=float, default=1.0, help="alpha of thershold in KNN algorithm")
     parser.add_argument("--top-k",type=int, default=3, help="top-k in KNN algorithm")
+    parser.add_argument("--save-model", action='store_true', help="Save model")
+    parser.add_argument("--model-path", type=str, default="./model", help="Path to save model")
 
     args = parser.parse_args()
     print(args)

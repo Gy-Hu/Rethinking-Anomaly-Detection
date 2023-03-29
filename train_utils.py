@@ -53,19 +53,19 @@ def train(model, g, args):
     train_mask = torch.zeros([len(labels)]).bool()
     val_mask = torch.zeros([len(labels)]).bool()
     test_mask = torch.zeros([len(labels)]).bool()
-    
-    
+
+
 
 
     train_mask[idx_train] = 1
     val_mask[idx_valid] = 1
     test_mask[idx_test] = 1
     print('train/dev/test samples: ', train_mask.sum().item(), val_mask.sum().item(), test_mask.sum().item())
-    
+
     g.ndata['train_mask'] = train_mask
     g.ndata['val_mask'] = val_mask
     g.ndata['test_mask'] = test_mask
-    
+
     optimizer = torch.optim.Adam(model.parameters(), lr=0.005) # Start with a smaller learning rate
     #optimizer = torch.optim.RMSprop(model.parameters(), lr=0.001)
     #scheduler = StepLR(optimizer, step_size=50, gamma=0.5)  # Adjust the step_size and gamma based on your dataset
@@ -73,7 +73,7 @@ def train(model, g, args):
 
     weight = (1-labels[train_mask]).sum().item() / labels[train_mask].sum().item()
     print('cross entropy weight: ', weight)
-    
+
     time_start = time.time()
     for e in range(args.epoch):
         model.train()
@@ -106,4 +106,7 @@ def train(model, g, args):
     print('time cost: ', time_end - time_start, 's')
     print('Test: REC {:.2f} PRE {:.2f} MF1 {:.2f} AUC {:.2f}'.format(final_trec*100,
                                                                      final_tpre*100, final_tmf1*100, final_tauc*100))
+    # Save model with time stamp
+    if args.save_model:
+        torch.save(model.state_dict(), f'{args.model_path}/model_{int(time.time())}.pt')
     return final_tmf1, final_tauc
