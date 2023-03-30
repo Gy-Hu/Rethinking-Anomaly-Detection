@@ -15,6 +15,10 @@ from gcn_estimator import GCNEstimator
 from sklearn.model_selection import GridSearchCV
 from train_utils import train
 
+# Check for CUDA availability and set the device to GPU if available
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print('Using device:', device)
+
 def hyperparameter_tuning(param_grid, graph, args, cv=3):
     hid_dim_values = param_grid['hid_dim']
     num_layers_values = param_grid['num_layers']
@@ -55,7 +59,7 @@ if __name__ == '__main__':
                         help="Dataset for this model (yelp/amazon/tfinance/tsocial)")
     parser.add_argument("--train_ratio", type=float, default=0.4, help="Training ratio")
     parser.add_argument("--hid_dim", type=int, default=64, help="Hidden layer dimension")
-    parser.add_argument("--num_layers", type=int, default=2, help="Number of GNN layers")
+    parser.add_argument("--num_layers", type=int, default=3, help="Number of GNN layers")
     parser.add_argument("--epoch", type=int, default=100, help="The max number of epochs")
     parser.add_argument("--run", type=int, default=1, help="Running mode")
     parser.add_argument("--knn-reconstruct-graph", action='store_true',help="Reconstruct graph using KNN algorithm")

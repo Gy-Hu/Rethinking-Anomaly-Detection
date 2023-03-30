@@ -12,6 +12,8 @@ from GCN import GCNModel
 from torch.optim.lr_scheduler import StepLR
 from sklearn.model_selection import GridSearchCV
 
+
+
 # threshold adjusting for best macro f1
 def get_best_f1(labels, probs):
     best_f1, best_thre = 0, 0
@@ -38,21 +40,26 @@ def evaluate(model, graph, args):
         )
 
 def train(model, g, args):
-    features = g.ndata['feature']
+    # train in gpu if available
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.to(device)
+    g = g.to(device)
+    
+    features = g.ndata['feature'].to(device)
     labels = g.ndata['label']
     index = list(range(len(labels)))
     if args.dataset == 'amazon':
         index = list(range(3305, len(labels)))
 
-    idx_train, idx_rest, y_train, y_rest = train_test_split(index, labels[index], stratify=labels[index],
+    idx_train, idx_rest, y_train, y_rest = train_test_split(index, labels[index], stratify=labels[index].cpu(),
                                                             train_size=args.train_ratio,
                                                             random_state=2, shuffle=True)
-    idx_valid, idx_test, y_valid, y_test = train_test_split(idx_rest, y_rest, stratify=y_rest,
+    idx_valid, idx_test, y_valid, y_test = train_test_split(idx_rest, y_rest, stratify=y_rest.cpu(),
                                                             test_size=0.67,
                                                             random_state=2, shuffle=True)
-    train_mask = torch.zeros([len(labels)]).bool()
-    val_mask = torch.zeros([len(labels)]).bool()
-    test_mask = torch.zeros([len(labels)]).bool()
+    train_mask = torch.zeros([len(labels)]).bool().to(device)
+    val_mask = torch.zeros([len(labels)]).bool().to(device)
+    test_mask = torch.zeros([len(labels)]).bool().to(device)
 
 
 
@@ -79,20 +86,20 @@ def train(model, g, args):
         model.train()
         #logits = model(features)
         logits = model(g, features)
-        loss = F.cross_entropy(logits[train_mask], labels[train_mask], weight=torch.tensor([1., weight]))
+        loss = F.cross_entropy(logits[train_mask], labels[train_mask], weight=torch.tensor([1., weight]).to(device))
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         #scheduler.step()
         model.eval()
         probs = logits.softmax(1)
-        f1, thres = get_best_f1(labels[val_mask], probs[val_mask])
-        preds = numpy.zeros_like(labels)
-        preds[probs[:, 1] > thres] = 1
-        trec = recall_score(labels[test_mask], preds[test_mask])
-        tpre = precision_score(labels[test_mask], preds[test_mask],average='binary', zero_division=0)
-        tmf1 = f1_score(labels[test_mask], preds[test_mask], average='macro',zero_division=1)
-        tauc = roc_auc_score(labels[test_mask], probs[test_mask][:, 1].detach().numpy())
+        f1, thres = get_best_f1(labels[val_mask].cpu(), probs[val_mask].cpu())
+        preds = numpy.zeros_like(labels.cpu())
+        preds[probs[:, 1].cpu() > thres] = 1
+        trec = recall_score(labels[test_mask.cpu()].cpu(), preds[test_mask.cpu()])
+        tpre = precision_score(labels[test_mask.cpu()].cpu(), preds[test_mask.cpu()],average='binary', zero_division=0)
+        tmf1 = f1_score(labels[test_mask.cpu()].cpu(), preds[test_mask.cpu()], average='macro',zero_division=1)
+        tauc = roc_auc_score(labels[test_mask.cpu()].cpu(), probs[test_mask.cpu()][:, 1].cpu().detach().numpy())
 
         if best_f1 < f1:
             best_f1 = f1
