@@ -27,11 +27,14 @@ def get_best_f1(labels, probs):
     return best_f1, best_thre
 
 def evaluate(model, graph, args):
+    model.to(args.device)
+    graph = graph.to(args.device)
     model.eval()
     with torch.no_grad():
         logits = model(graph, graph.ndata['feature'])
-        valid_logits = logits[graph.ndata['val_mask']]
-        valid_labels = graph.ndata['label'][graph.ndata['val_mask']]
+        print("Evaluate function: val_mask", graph.ndata['val_mask'])
+        valid_logits = logits[graph.ndata['val_mask'].cpu()]
+        valid_labels = graph.ndata['label'][graph.ndata['val_mask'].cpu()]
         _, indices = torch.max(valid_logits, dim=1)
         correct = torch.sum(indices == valid_labels)
         accuracy = correct.item() / len(valid_labels)
@@ -41,11 +44,10 @@ def evaluate(model, graph, args):
 
 def train(model, g, args):
     # train in gpu if available
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model.to(device)
-    g = g.to(device)
+    model.to(args.device)
+    g = g.to(args.device)
     
-    features = g.ndata['feature'].to(device)
+    features = g.ndata['feature'].to(args.device)
     labels = g.ndata['label']
     index = list(range(len(labels)))
     if args.dataset == 'amazon':
@@ -57,9 +59,9 @@ def train(model, g, args):
     idx_valid, idx_test, y_valid, y_test = train_test_split(idx_rest, y_rest, stratify=y_rest.cpu(),
                                                             test_size=0.67,
                                                             random_state=2, shuffle=True)
-    train_mask = torch.zeros([len(labels)]).bool().to(device)
-    val_mask = torch.zeros([len(labels)]).bool().to(device)
-    test_mask = torch.zeros([len(labels)]).bool().to(device)
+    train_mask = torch.zeros([len(labels)]).bool().to(args.device)
+    val_mask = torch.zeros([len(labels)]).bool().to(args.device)
+    test_mask = torch.zeros([len(labels)]).bool().to(args.device)
 
 
 
@@ -72,6 +74,9 @@ def train(model, g, args):
     g.ndata['train_mask'] = train_mask
     g.ndata['val_mask'] = val_mask
     g.ndata['test_mask'] = test_mask
+    
+    print("Train function: val_mask", g.ndata['val_mask'])
+
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.005) # Start with a smaller learning rate
     #optimizer = torch.optim.RMSprop(model.parameters(), lr=0.001)
@@ -86,7 +91,7 @@ def train(model, g, args):
         model.train()
         #logits = model(features)
         logits = model(g, features)
-        loss = F.cross_entropy(logits[train_mask], labels[train_mask], weight=torch.tensor([1., weight]).to(device))
+        loss = F.cross_entropy(logits[train_mask], labels[train_mask], weight=torch.tensor([1., weight]).to(args.device))
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -113,6 +118,9 @@ def train(model, g, args):
     print('time cost: ', time_end - time_start, 's')
     print('Test: REC {:.2f} PRE {:.2f} MF1 {:.2f} AUC {:.2f}'.format(final_trec*100,
                                                                      final_tpre*100, final_tmf1*100, final_tauc*100))
+    if args.run == 2:
+        print("Model after training:", model)
+        print("Graph after training:", g)
     # Save model with time stamp
     if args.save_model:
         torch.save(model.state_dict(), f'{args.model_path}/model_{int(time.time())}.pt')

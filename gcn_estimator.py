@@ -10,14 +10,18 @@ class GCNEstimator(BaseEstimator):
         self.num_layers = num_layers
         self.kwargs = kwargs
         self.model = None
+        self.graph = None
         
     def fit(self, graph, args):
+        self.graph = graph
         in_feats = graph.ndata['feature'].shape[1]
         num_classes = 2
 
         self.model = GCNModel(in_feats, self.hid_dim, num_classes, self.num_layers)
-        train(self.model, graph, args)  # Pass the args variable to the train function
+        train(self.model, self.graph, args)  # Pass the args variable to the train function
         
-    def score(self, graph, args):
-        return evaluate(self.model, graph, args)
+    def score(self, args):
+        print("Model during scoring:", self.model)
+        print("Graph during scoring:", self.graph)
+        return evaluate(self.model, self.graph, args)
 

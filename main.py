@@ -33,7 +33,7 @@ def hyperparameter_tuning(param_grid, graph, args, cv=3):
         for _ in range(cv):
             estimator = GCNEstimator(hid_dim=hid_dim, num_layers=num_layers)
             estimator.fit(graph, args)
-            auc = estimator.score(graph, args)
+            auc = estimator.score(args)
             auc_scores.append(auc)
         
 
@@ -69,8 +69,12 @@ if __name__ == '__main__':
     parser.add_argument("--top-k",type=int, default=3, help="top-k in KNN algorithm")
     parser.add_argument("--save-model", action='store_true', help="Save model")
     parser.add_argument("--model-path", type=str, default="./model", help="Path to save model")
-
-    args = parser.parse_args()
+    parser.add_argument("--device",type=str, default='cuda', help="Device to use")
+    
+    args = parser.parse_args(['--run','2'])
+    # if args.device == 'cuda', but cuda is not available, then use cpu
+    args.device = torch.device(args.device if torch.cuda.is_available() and args.run!=2 else 'cpu')
+    
     print(args)
     dataset_name = args.dataset
     h_feats = args.hid_dim
