@@ -69,11 +69,13 @@ if __name__ == '__main__':
     parser.add_argument("--top-k",type=int, default=3, help="top-k in KNN algorithm")
     parser.add_argument("--save-model", action='store_true', help="Save model")
     parser.add_argument("--model-path", type=str, default="./model", help="Path to save model")
-    parser.add_argument("--device",type=str, default='cuda', help="Device to use")
+    parser.add_argument("--device",type=str, default='cpu', help="Device to use")
+    parser.add_argument("--choose-model",type=str, default='GCN', help="Choose model to use (GCN/BWGNN)")
+    parser.add_argument("--hyperparameter-tuning", action='store_true', help="Hyperparameter tuning for L and D")
     
-    args = parser.parse_args(['--run','2'])
+    args = parser.parse_args()
     # if args.device == 'cuda', but cuda is not available, then use cpu
-    args.device = torch.device(args.device if torch.cuda.is_available() and args.run!=2 else 'cpu')
+    args.device = torch.device(args.device if torch.cuda.is_available() and args.hyperparameter_tuning!=True else 'cpu')
     
     print(args)
     dataset_name = args.dataset
@@ -87,11 +89,15 @@ if __name__ == '__main__':
     num_classes = 2
 
     if args.run == 1:
-        #model = BWGNN(in_feats, h_feats, num_classes, graph, d=order)
-        model = GCNModel(in_feats, h_feats, num_classes, args.num_layers)
-        model.apply(weights_init)
+        if args.choose_model == 'GCN':
+            model = GCNModel(in_feats, h_feats, num_classes, args.num_layers)
+            model.apply(weights_init)
+        elif args.choose_model == 'BWGNN':
+            model = BWGNN(in_feats, h_feats, num_classes, graph, d=2)
+        #model = BWGNN(in_feats, h_feats, num_classes, graph, d=2) if args.choose_model == 'BWGNN' else GCNModel(in_feats, h_feats, num_classes, args.num_layers) if args.choose_model == 'GCN' else None
+        assert model is not None, "Please choose model to use (GCN/BWGNN)"
         train(model, graph, args)
-    elif args.run == 2: # hyperparameter tuning
+    elif args.run == 0 and args.hyperparameter_tuning: # hyperparameter tuning
         param_grid = {
             'hid_dim': [32, 64, 128],
             'num_layers': [3, 4, 5],
@@ -104,8 +110,8 @@ if __name__ == '__main__':
     else:
         final_mf1s, final_aucs = [], []
         for _ in range(args.run):
-            #model = BWGNN(in_feats, h_feats, num_classes, graph, d=order)
-            model = GCNModel(in_feats, h_feats, num_classes, args.num_layers)
+            model = BWGNN(in_feats, h_feats, num_classes, graph, d=2) if args.choose_model == 'BWGNN' else GCNModel(in_feats, h_feats, num_classes, args.num_layers) if args.choose_model == 'GCN' else None
+            assert model is not None, "Please choose model to use (GCN/BWGNN)"
             model.apply(weights_init)
             mf1, auc = train(model, graph, args)
             final_mf1s.append(mf1)
