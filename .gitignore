@@ -1,5 +1,5 @@
 __pycache__/
 dataset/
-BWGNN.py
 log/
 *.log
+GCNGNN.py

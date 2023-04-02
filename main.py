@@ -10,6 +10,7 @@ from sklearn.metrics import f1_score, accuracy_score, recall_score, roc_auc_scor
 from BWGNN import *
 from sklearn.model_selection import train_test_split
 from GCN import GCNModel
+#from GCNGNN import GCNGNN
 from torch.optim.lr_scheduler import StepLR
 from gcn_estimator import GCNEstimator
 from sklearn.model_selection import GridSearchCV
@@ -61,7 +62,7 @@ if __name__ == '__main__':
     parser.add_argument("--hid_dim", type=int, default=64, help="Hidden layer dimension")
     parser.add_argument("--num_layers", type=int, default=3, help="Number of GNN layers")
     parser.add_argument("--epoch", type=int, default=100, help="The max number of epochs")
-    parser.add_argument("--run", type=int, default=1, help="Running mode")
+    parser.add_argument("--run", type=int, default=1, help="Running times. 0 -> hyperparameter tuning")
     parser.add_argument("--knn-reconstruct-graph", action='store_true',help="Reconstruct graph using KNN algorithm")
     parser.add_argument("--knn-reconstruct-graph-approximate", action='store_true', 
                         help="Reconstruct graph using approximate KNN algorithm (Fast verision)")
@@ -69,7 +70,7 @@ if __name__ == '__main__':
     parser.add_argument("--top-k",type=int, default=3, help="top-k in KNN algorithm")
     parser.add_argument("--save-model", action='store_true', help="Save model")
     parser.add_argument("--model-path", type=str, default="./model", help="Path to save model")
-    parser.add_argument("--device",type=str, default='cpu', help="Device to use")
+    parser.add_argument("--device",type=str, default='cuda', help="Device to use")
     parser.add_argument("--choose-model",type=str, default='GCN', help="Choose model to use (GCN/BWGNN)")
     parser.add_argument("--hyperparameter-tuning", action='store_true', help="Hyperparameter tuning for L and D")
     
@@ -88,25 +89,26 @@ if __name__ == '__main__':
     in_feats = graph.ndata['feature'].shape[1]
     num_classes = 2
 
-    if args.run == 1:
+    
+    if args.run == 0 and args.hyperparameter_tuning: # hyperparameter tuning
+        param_grid = {
+            'hid_dim': [32, 64, 128],
+            'num_layers': [3, 4, 5],
+        }
+        best_params, best_auc = hyperparameter_tuning(param_grid, graph, args)
+
+        print("Best parameters found: ", best_params)
+        print("Highest AUC found: ", best_auc)
+    elif args.run == 1:
         if args.choose_model == 'GCN':
             model = GCNModel(in_feats, h_feats, num_classes, args.num_layers)
+            #model = GCNGNN(in_feats, h_feats, num_classes, graph)
             model.apply(weights_init)
         elif args.choose_model == 'BWGNN':
             model = BWGNN(in_feats, h_feats, num_classes, graph, d=2)
         #model = BWGNN(in_feats, h_feats, num_classes, graph, d=2) if args.choose_model == 'BWGNN' else GCNModel(in_feats, h_feats, num_classes, args.num_layers) if args.choose_model == 'GCN' else None
         assert model is not None, "Please choose model to use (GCN/BWGNN)"
         train(model, graph, args)
-    elif args.run == 0 and args.hyperparameter_tuning: # hyperparameter tuning
-        param_grid = {
-            'hid_dim': [32, 64, 128],
-            'num_layers': [3, 4, 5],
-        }
-
-        best_params, best_auc = hyperparameter_tuning(param_grid, graph, args)
-
-        print("Best parameters found: ", best_params)
-        print("Highest AUC found: ", best_auc)
     else:
         final_mf1s, final_aucs = [], []
         for _ in range(args.run):

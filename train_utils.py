@@ -91,10 +91,10 @@ def train(model, g, args):
     time_start = time.time()
     for e in range(args.epoch):
         model.train()
-        logits = model(g, features) if args.choose_model == 'GCN' else model(features) if args.choose_model == 'BWGNN' else None
-        assert logits is not None, "Choose a model from GCN or BWGNN"
         #logits = model(features)
         #logits = model(g, features)
+        logits = model(g, features) if args.choose_model == 'GCN' else model(features) if args.choose_model == 'BWGNN' else None
+        assert logits is not None, "Choose a model from GCN or BWGNN"
         loss = F.cross_entropy(logits[train_mask], labels[train_mask], weight=torch.tensor([1., weight]).to(args.device))
         optimizer.zero_grad()
         loss.backward()
