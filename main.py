@@ -9,7 +9,7 @@ from dataset import Dataset
 from sklearn.metrics import f1_score, accuracy_score, recall_score, roc_auc_score, precision_score, confusion_matrix
 from BWGNN import *
 from sklearn.model_selection import train_test_split
-from GCN import GCNModel
+from GCN import GCNModel, ChebConvModel, GATConvModel, SAGEConvModel
 #from GCNGNN import GCNGNN
 from torch.optim.lr_scheduler import StepLR
 from gcn_estimator import GCNEstimator
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     parser.add_argument("--save-model", action='store_true', help="Save model")
     parser.add_argument("--model-path", type=str, default="./model", help="Path to save model")
     parser.add_argument("--device",type=str, default='cuda', help="Device to use")
-    parser.add_argument("--choose-model",type=str, default='GCN', help="Choose model to use (GCN/BWGNN)")
+    parser.add_argument("--choose-model",type=str, default='GCN', help="Choose model to use (GCN/BWGNN/GAT/SAGE/Cheb)")
     parser.add_argument("--hyperparameter-tuning", action='store_true', help="Hyperparameter tuning for L and D")
     
     args = parser.parse_args()
@@ -102,17 +102,27 @@ if __name__ == '__main__':
     elif args.run == 1:
         if args.choose_model == 'GCN':
             model = GCNModel(in_feats, h_feats, num_classes, args.num_layers)
+            #model = ChebConv(in_feats, num_classes, k=2)
             #model = GCNGNN(in_feats, h_feats, num_classes, graph)
             model.apply(weights_init)
         elif args.choose_model == 'BWGNN':
             model = BWGNN(in_feats, h_feats, num_classes, graph, d=2)
+        else:
+            model = None
         #model = BWGNN(in_feats, h_feats, num_classes, graph, d=2) if args.choose_model == 'BWGNN' else GCNModel(in_feats, h_feats, num_classes, args.num_layers) if args.choose_model == 'GCN' else None
         assert model is not None, "Please choose model to use (GCN/BWGNN)"
         train(model, graph, args)
     else:
         final_mf1s, final_aucs = [], []
         for _ in range(args.run):
-            model = BWGNN(in_feats, h_feats, num_classes, graph, d=2) if args.choose_model == 'BWGNN' else GCNModel(in_feats, h_feats, num_classes, args.num_layers) if args.choose_model == 'GCN' else None
+            if args.choose_model == 'GCN':
+                model = GCNModel(in_feats, h_feats, num_classes, args.num_layers)
+                #model = GCNGNN(in_feats, h_feats, num_classes, graph)
+                model.apply(weights_init)
+            elif args.choose_model == 'BWGNN':
+                model = BWGNN(in_feats, h_feats, num_classes, graph, d=2)
+            else:
+                model = None
             assert model is not None, "Please choose model to use (GCN/BWGNN)"
             model.apply(weights_init)
             mf1, auc = train(model, graph, args)

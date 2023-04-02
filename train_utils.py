@@ -8,7 +8,7 @@ from dataset import Dataset
 from sklearn.metrics import f1_score, accuracy_score, recall_score, roc_auc_score, precision_score, confusion_matrix
 from BWGNN import *
 from sklearn.model_selection import train_test_split
-from GCN import GCNModel
+from GCN import GCNModel, ChebConvModel, GATConvModel, SAGEConvModel
 from torch.optim.lr_scheduler import StepLR
 from sklearn.model_selection import GridSearchCV
 
@@ -43,6 +43,7 @@ def evaluate(model, graph, args):
         )
 
 def train(model, g, args):
+    #print("Graph object:", g) 
     # print class names of model
     print(model.__class__.__name__)
     # train in gpu if available
@@ -93,8 +94,17 @@ def train(model, g, args):
         model.train()
         #logits = model(features)
         #logits = model(g, features)
-        logits = model(g, features) if args.choose_model == 'GCN' else model(features) if args.choose_model == 'BWGNN' else None
-        assert logits is not None, "Choose a model from GCN or BWGNN"
+        if args.choose_model == 'GCN':
+            #edge_weight = torch.ones(g.number_of_edges()).to(features.device)  # Replace with your desired edge weights
+            #logits = model(g, features, edge_weight)
+            logits = model(g, features)
+        elif args.choose_model == 'BWGNN':
+            logits = model(features)
+        else:
+            assert False, "Choose a model from GCN or BWGNN"
+
+        #logits = model(g, features) if args.choose_model == 'GCN' else model(features) if args.choose_model == 'BWGNN' else None
+        #assert logits is not None, "Choose a model from GCN or BWGNN"
         loss = F.cross_entropy(logits[train_mask], labels[train_mask], weight=torch.tensor([1., weight]).to(args.device))
         optimizer.zero_grad()
         loss.backward()
