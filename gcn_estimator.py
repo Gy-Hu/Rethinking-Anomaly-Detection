@@ -18,7 +18,7 @@ class GCNEstimator(BaseEstimator):
         num_classes = 2
 
         self.model = GCNModel(in_feats, self.hid_dim, num_classes, self.num_layers)
-        train(self.model, self.graph, args)  # Pass the args variable to the train function
+        _,_,self.model, self.graph = train(self.model, self.graph, args)  # Pass the args variable to the train function
         
     def score(self, args):
         print("Model during scoring:", self.model)

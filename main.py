@@ -74,9 +74,10 @@ if __name__ == '__main__':
     parser.add_argument("--choose-model",type=str, default='GCN', help="Choose model to use (GCN/BWGNN/GAT/SAGE/Cheb)")
     parser.add_argument("--hyperparameter-tuning", action='store_true', help="Hyperparameter tuning for L and D")
     
+    #args = parser.parse_args(['--run','0','--hyperparameter-tuning','--top-k','5'])
     args = parser.parse_args()
     # if args.device == 'cuda', but cuda is not available, then use cpu
-    args.device = torch.device(args.device if torch.cuda.is_available() and args.hyperparameter_tuning!=True else 'cpu')
+    args.device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
     
     print(args)
     dataset_name = args.dataset
@@ -125,7 +126,7 @@ if __name__ == '__main__':
                 model = None
             assert model is not None, "Please choose model to use (GCN/BWGNN)"
             model.apply(weights_init)
-            mf1, auc = train(model, graph, args)
+            mf1, auc,_,_ = train(model, graph, args)
             final_mf1s.append(mf1)
             final_aucs.append(auc)
         final_mf1s = np.array(final_mf1s)

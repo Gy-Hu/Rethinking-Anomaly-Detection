@@ -11,8 +11,7 @@ from sklearn.model_selection import train_test_split
 from GCN import GCNModel, ChebConvModel, GATConvModel, SAGEConvModel
 from torch.optim.lr_scheduler import StepLR
 from sklearn.model_selection import GridSearchCV
-
-
+import copy
 
 # threshold adjusting for best macro f1
 def get_best_f1(labels, probs):
@@ -138,4 +137,4 @@ def train(model, g, args):
     # Save model with time stamp
     if args.save_model:
         torch.save(model.state_dict(), f'{args.model_path}/model_{int(time.time())}.pt')
-    return final_tmf1, final_tauc
+    return final_tmf1, final_tauc, copy.deepcopy(model), copy.deepcopy(g)
