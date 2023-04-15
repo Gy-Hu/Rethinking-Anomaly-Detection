@@ -1,5 +1,6 @@
 __pycache__/
 dataset/
-log/
 *.log
 deprecated/
+# But don't ignore .log files in the log/ folder
+!log/*.log
