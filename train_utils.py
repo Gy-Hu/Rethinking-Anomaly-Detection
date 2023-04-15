@@ -30,10 +30,15 @@ def evaluate(model, graph, args):
     graph = graph.to(args.device)
     model.eval()
     with torch.no_grad():
+        
         logits = model(graph, graph.ndata['feature'])
+        #probs = logits.softmax(1)
+        #_, thres = get_best_f1(graph.ndata['label'][graph.ndata['val_mask'].cpu()].cpu().numpy(), probs[graph.ndata['val_mask'].cpu()].cpu().numpy())
         print("Evaluate function: test_mask", graph.ndata['test_mask'])
         valid_logits = logits[graph.ndata['test_mask'].cpu()]
         valid_labels = graph.ndata['label'][graph.ndata['test_mask'].cpu()]
+        #preds = numpy.zeros_like(valid_labels)
+        #preds[probs[graph.ndata['test_mask'].cpu()].cpu().numpy()[:,1] > thres] = 1
         _, indices = torch.max(valid_logits, dim=1)
         correct = torch.sum(indices == valid_labels)
         accuracy = correct.item() / len(valid_labels)
@@ -115,10 +120,19 @@ def train(model, g, args):
         optimizer.step()
         #scheduler.step()
         model.eval()
+        
+        ### using moving threshold
         probs = logits.softmax(1)
         f1, thres = get_best_f1(labels[val_mask].cpu(), probs[val_mask].cpu())
         preds = numpy.zeros_like(labels.cpu())
         preds[probs[:, 1].cpu() > thres] = 1
+        
+        ### not using moving threshold
+        # probs = logits.softmax(1)
+        # preds = numpy.zeros_like(labels.cpu())
+        ### if prob right > prob left, then predict right
+        # preds[probs[:, 1].cpu() > probs[:, 0].cpu()] = 1
+        
         trec = recall_score(labels[test_mask.cpu()].cpu(), preds[test_mask.cpu()])
         tpre = precision_score(labels[test_mask.cpu()].cpu(), preds[test_mask.cpu()],average='binary', zero_division=0)
         tmf1 = f1_score(labels[test_mask.cpu()].cpu(), preds[test_mask.cpu()], average='macro',zero_division=1)
