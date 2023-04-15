@@ -3,7 +3,7 @@
 This is for the DSAA6000B assignment (Personal usage only)
 
 ## Note
-* 'log/' contains all the log files for my experiments
+* `log/` contains all the log files for my experiments
 
 ## Usage
 Put `tfinance` in `./dataset/` and run `python3 main.py`
