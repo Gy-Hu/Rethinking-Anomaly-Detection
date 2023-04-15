@@ -62,7 +62,7 @@ if __name__ == '__main__':
     parser.add_argument("--hid_dim", type=int, default=64, help="Hidden layer dimension")
     parser.add_argument("--num_layers", type=int, default=3, help="Number of GNN layers")
     parser.add_argument("--epoch", type=int, default=100, help="The max number of epochs")
-    parser.add_argument("--run", type=int, default=1, help="Running times. 0 -> hyperparameter tuning")
+    parser.add_argument("--run", type=int, default=1, help="Running times.")
     parser.add_argument("--knn-reconstruct-graph", action='store_true',help="Reconstruct graph using KNN algorithm")
     parser.add_argument("--knn-reconstruct-graph-approximate", action='store_true', 
                         help="Reconstruct graph using approximate KNN algorithm (Fast verision)")
