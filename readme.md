@@ -1,6 +1,6 @@
 # DSAA6000B Assignment
 
-This is for the DSAA6000B assignment (Personal usage only). This repo update KNN-based graph re-construction method for GCN model, and grid search hyperparameter tuning for L and D.
+This is for the DSAA6000B assignment (Personal usage only). This repo update KNN-based graph re-construction method for GCN model, and grid search hyperparameter tuning for L and D. For software engineering side, I update GPU support and add more command line arguments for easy usage.
 
 ## Note
 * `log/` contains all the log files for my experiments
