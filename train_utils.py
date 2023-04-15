@@ -31,14 +31,21 @@ def evaluate(model, graph, args):
     model.eval()
     with torch.no_grad():
         logits = model(graph, graph.ndata['feature'])
-        print("Evaluate function: val_mask", graph.ndata['val_mask'])
-        valid_logits = logits[graph.ndata['val_mask'].cpu()]
-        valid_labels = graph.ndata['label'][graph.ndata['val_mask'].cpu()]
+        print("Evaluate function: test_mask", graph.ndata['test_mask'])
+        valid_logits = logits[graph.ndata['test_mask'].cpu()]
+        valid_labels = graph.ndata['label'][graph.ndata['test_mask'].cpu()]
         _, indices = torch.max(valid_logits, dim=1)
         correct = torch.sum(indices == valid_labels)
         accuracy = correct.item() / len(valid_labels)
+        #return roc_auc_score(valid_labels.cpu().numpy(), valid_logits[:, 1].cpu().numpy())
         return roc_auc_score(
             valid_labels.cpu().numpy(), valid_logits[:, 1].cpu().numpy()
+        ), recall_score(
+            valid_labels.cpu().numpy(), indices.cpu().numpy(), average='macro',zero_division=1
+        ), precision_score(
+            valid_labels.cpu().numpy(), indices.cpu().numpy()
+        ), f1_score(
+            valid_labels.cpu().numpy(), indices.cpu().numpy(), average='binary', zero_division=0
         )
 
 def train(model, g, args):
@@ -52,8 +59,6 @@ def train(model, g, args):
     features = g.ndata['feature'].to(args.device)
     labels = g.ndata['label']
     index = list(range(len(labels)))
-    if args.dataset == 'amazon':
-        index = list(range(3305, len(labels)))
 
     idx_train, idx_rest, y_train, y_rest = train_test_split(index, labels[index], stratify=labels[index].cpu(),
                                                             train_size=args.train_ratio,

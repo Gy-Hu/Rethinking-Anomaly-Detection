@@ -30,16 +30,16 @@ def hyperparameter_tuning(param_grid, graph, args, cv=3):
     for hid_dim, num_layers in itertools.product(hid_dim_values, num_layers_values):
         print(f"Trying hid_dim: {hid_dim}, num_layers: {num_layers}")
 
-        auc_scores = []
+        auc_scores = [] ; rec_score = [] ; pre_score = [] ; f1_score = []
         for _ in range(cv):
             estimator = GCNEstimator(hid_dim=hid_dim, num_layers=num_layers)
             estimator.fit(graph, args)
-            auc = estimator.score(args)
-            auc_scores.append(auc)
+            auc, rec, pre, f1 = estimator.score(args)
+            auc_scores.append(auc);rec_score.append(rec);pre_score.append(pre);f1_score.append(f1)
         
 
-        avg_auc = np.mean(auc_scores)
-        print(f"Average AUC: {avg_auc} in {cv} runs, with hid_dim: {hid_dim}, num_layers: {num_layers}")
+        avg_auc = np.mean(auc_scores); avg_rec = np.mean(rec_score); avg_pre = np.mean(pre_score); avg_f1 = np.mean(f1_score)
+        print(f"Average AUC: {avg_auc}, Average Recall: {avg_rec}, Average Precision: {avg_pre}, Average F1: {avg_f1} in {cv} runs, with hid_dim: {hid_dim}, num_layers: {num_layers}")
 
         if avg_auc > best_auc:
             best_auc = avg_auc
@@ -70,11 +70,12 @@ if __name__ == '__main__':
     parser.add_argument("--top-k",type=int, default=3, help="top-k in KNN algorithm")
     parser.add_argument("--save-model", action='store_true', help="Save model")
     parser.add_argument("--model-path", type=str, default="./model", help="Path to save model")
-    parser.add_argument("--device",type=str, default='cuda', help="Device to use")
+    parser.add_argument("--device",type=str, default='cuda:0', help="Device to use")
     parser.add_argument("--choose-model",type=str, default='GCN', help="Choose model to use (GCN/BWGNN/GAT/SAGE/Cheb)")
     parser.add_argument("--hyperparameter-tuning", action='store_true', help="Hyperparameter tuning for L and D")
     
     #args = parser.parse_args(['--run','0','--hyperparameter-tuning','--top-k','5'])
+    #args = parser.parse_args(['--run','1'])
     args = parser.parse_args()
     # if args.device == 'cuda', but cuda is not available, then use cpu
     args.device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
@@ -91,7 +92,7 @@ if __name__ == '__main__':
     num_classes = 2
 
     
-    if args.run == 0 and args.hyperparameter_tuning: # hyperparameter tuning
+    if args.hyperparameter_tuning: # hyperparameter tuning
         param_grid = {
             'hid_dim': [32, 64, 128],
             'num_layers': [3, 4, 5],
