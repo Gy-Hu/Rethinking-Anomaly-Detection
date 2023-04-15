@@ -2,10 +2,8 @@
 
 This is for the DSAA6000B assignment (Personal usage only)
 
-## TODO
-- [x] Add gpu support
-- [x] Add hyperparameter tuning for L and D
-- [x] Add save model function
+## Note
+* 'log/' contains all the log files for my experiments
 
 ## Usage
 Put `tfinance` in `./dataset/` and run `python3 main.py`
