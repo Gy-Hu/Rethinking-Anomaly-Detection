@@ -75,8 +75,8 @@ if __name__ == '__main__':
     parser.add_argument("--hyperparameter-tuning", action='store_true', help="Hyperparameter tuning for L and D")
     
     #args = parser.parse_args(['--run','0','--hyperparameter-tuning','--top-k','5'])
-    #args = parser.parse_args(['--run','1'])
-    args = parser.parse_args()
+    args = parser.parse_args(['--run','1'])
+    #args = parser.parse_args()
     # if args.device == 'cuda', but cuda is not available, then use cpu
     args.device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
     

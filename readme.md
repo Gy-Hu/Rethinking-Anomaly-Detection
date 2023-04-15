@@ -6,7 +6,7 @@ This is for the DSAA6000B assignment (Personal usage only)
 * `log/` contains all the log files for my experiments
 
 ## Usage
-Put `tfinance` in `./dataset/` and run `python3 main.py`
+Put `tfinance` in `./dataset/` and run `python3 main.py`. Data can directly download the T-Finance dataset from [here](https://drive.google.com/drive/folders/1PpNwvZx_YRSCDiHaBUmRIS3x1rZR7fMr?usp=sharing)
 * usage: `python main.py [-h] [--dataset DATASET] [--train_ratio TRAIN_RATIO] [--hid_dim HID_DIM] [--num_layers NUM_LAYERS] [--epoch EPOCH] [--run RUN] [--knn-reconstruct-graph] [--knn-reconstruct-graph-approximate] [--alpha ALPHA] [--top-k TOP_K] [--save-model] [--model-path MODEL_PATH] [--device DEVICE] [--choose-model CHOOSE_MODEL] [--hyperparameter-tuning]`
 * parameters:
     * `--dataset DATASET` : Dataset for this model (yelp/amazon/tfinance/tsocial, now only support tfinance)
